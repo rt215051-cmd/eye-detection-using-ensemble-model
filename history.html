@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scan History - EyeGuard OS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --accent-glow: rgba(0, 240, 255, 0.5);
+            --primary: #00e5ff;
+            --secondary: #7000ff;
+            --surface: rgba(255, 255, 255, 0.03);
+            --surface-border: rgba(255, 255, 255, 0.1);
+            --text-main: #f0f4f8;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        .ambient-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            background: radial-gradient(circle at 15% 50%, rgba(112, 0, 255, 0.1), transparent 50%),
+                radial-gradient(circle at 85% 30%, rgba(0, 229, 255, 0.1), transparent 50%);
+        }
+
+        header {
+            padding: 2rem 4rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--surface-border);
+            background: rgba(11, 15, 25, 0.6);
+            backdrop-filter: blur(20px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(90deg, #fff, var(--primary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo i {
+            color: var(--primary);
+            -webkit-text-fill-color: var(--primary);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: var(--text-muted);
+            font-weight: 500;
+            padding: 0.5rem 1.2rem;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+
+        .nav-link:hover {
+            color: var(--primary);
+            border-color: var(--surface-border);
+        }
+
+        .nav-link.active {
+            color: var(--primary);
+            border-color: var(--primary);
+            background: rgba(0, 229, 255, 0.05);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 3rem 4rem;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .page-header h1 {
+            font-size: 2rem;
+            font-weight: 600;
+        }
+
+        .record-count {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            padding: 0.4rem 1rem;
+            border-radius: 50px;
+            border: 1px solid var(--surface-border);
+            background: var(--surface);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 5rem 2rem;
+            color: var(--text-muted);
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            color: rgba(0, 229, 255, 0.2);
+            margin-bottom: 1.5rem;
+        }
+
+        .empty-state p {
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .scan-card {
+            background: var(--surface);
+            border: 1px solid var(--surface-border);
+            border-radius: 16px;
+            padding: 1.5rem 2rem;
+            margin-bottom: 1rem;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            animation: slideIn 0.4s ease forwards;
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        @keyframes slideIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .scan-card:hover {
+            border-color: rgba(0, 229, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        .scan-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .scan-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .scan-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .scan-icon.normal {
+            background: rgba(0, 229, 255, 0.1);
+            color: var(--primary);
+        }
+
+        .scan-icon.warning {
+            background: rgba(255, 165, 0, 0.1);
+            color: #ffa500;
+        }
+
+        .scan-icon.danger {
+            background: rgba(255, 68, 68, 0.1);
+            color: #ff4444;
+        }
+
+        .scan-meta h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.2rem;
+        }
+
+        .scan-meta span {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .scan-actions {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .confidence-badge {
+            padding: 0.4rem 1rem;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .confidence-badge.high {
+            background: rgba(0, 229, 255, 0.15);
+            color: var(--primary);
+        }
+
+        .confidence-badge.medium {
+            background: rgba(255, 165, 0, 0.15);
+            color: #ffa500;
+        }
+
+        .confidence-badge.low {
+            background: rgba(255, 68, 68, 0.15);
+            color: #ff4444;
+        }
+
+        .delete-btn {
+            background: transparent;
+            border: 1px solid rgba(255, 68, 68, 0.3);
+            color: #ff4444;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .delete-btn:hover {
+            background: rgba(255, 68, 68, 0.1);
+            border-color: #ff4444;
+        }
+
+        .prob-bars {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .prob-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .prob-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            min-width: 110px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .prob-track {
+            flex: 1;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .prob-fill {
+            height: 100%;
+            border-radius: 3px;
+            background: linear-gradient(90deg, var(--secondary), var(--primary));
+            transition: width 0.8s ease;
+        }
+
+        .prob-val {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            min-width: 50px;
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+
+        @media (max-width: 768px) {
+            header {
+                padding: 1.5rem 2rem;
+            }
+
+            .container {
+                padding: 2rem;
+            }
+
+            .scan-top {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+
+            .scan-actions {
+                align-self: flex-end;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="ambient-bg"></div>
+
+    <header>
+        <a href="/" style="text-decoration: none;">
+            <div class="logo">
+                <i class="fa-solid fa-eye"></i> EyeGuard OS
+            </div>
+        </a>
+        <div class="nav-links">
+            <a href="/dashboard" class="nav-link"><i class="fa-solid fa-microscope"></i> Scanner</a>
+            <a href="/history" class="nav-link active"><i class="fa-solid fa-clock-rotate-left"></i> History</a>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="page-header">
+            <h1><i class="fa-solid fa-clock-rotate-left" style="color: var(--primary); margin-right: 10px;"></i> Scan
+                History</h1>
+            <div class="record-count">{{ records|length }} record{{ 's' if records|length != 1 else '' }}</div>
+        </div>
+
+        {% if records|length == 0 %}
+        <div class="empty-state">
+            <i class="fa-solid fa-folder-open"></i>
+            <p>No scans yet. Analyze a retinal image to see results here.</p>
+            <a href="/dashboard" style="
+                background: linear-gradient(135deg, var(--primary) 0%, #0099ff 100%);
+                color: #0b0f19;
+                padding: 0.8rem 2rem;
+                border-radius: 12px;
+                text-decoration: none;
+                font-weight: 600;
+                box-shadow: 0 4px 15px rgba(0, 229, 255, 0.3);
+            ">Go to Scanner</a>
+        </div>
+        {% else %}
+        {% for record in records %}
+        <div class="scan-card" id="card-{{ record.id }}" style="animation-delay: {{ loop.index0 * 0.05 }}s;">
+            <div class="scan-top">
+                <div class="scan-info">
+                    <div
+                        class="scan-icon {% if record.prediction == 'Normal' %}normal{% elif record.confidence > 70 %}danger{% else %}warning{% endif %}">
+                        <i
+                            class="fa-solid {% if record.prediction == 'Normal' %}fa-check{% else %}fa-triangle-exclamation{% endif %}"></i>
+                    </div>
+                    <div class="scan-meta">
+                        <h3>{{ record.prediction }}</h3>
+                        <span><i class="fa-solid fa-file-image"></i> {{ record.filename }} &bull; {{ record.created_at
+                            }}</span>
+                    </div>
+                </div>
+                <div class="scan-actions">
+                    <span
+                        class="confidence-badge {% if record.confidence > 80 %}high{% elif record.confidence > 50 %}medium{% else %}low{% endif %}">
+                        {{ record.confidence }}% confidence
+                    </span>
+                    <button class="delete-btn" onclick="deleteRecord({{ record.id }})" title="Delete">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="prob-bars">
+                {% for item in record.all_results %}
+                <div class="prob-item">
+                    <span class="prob-label">{{ item.disease }}</span>
+                    <div class="prob-track">
+                        <div class="prob-fill" style="width: {{ item.probability }}%;"></div>
+                    </div>
+                    <span class="prob-val">{{ '%.1f' % item.probability }}%</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+        {% endif %}
+    </div>
+
+    <script>
+        async function deleteRecord(id) {
+            if (!confirm('Delete this scan record?')) return;
+            try {
+                const res = await fetch(`/history/delete/${id}`, { method: 'POST' });
+                if (res.ok) {
+                    const card = document.getElementById(`card-${id}`);
+                    card.style.transition = 'all 0.3s ease';
+                    card.style.opacity = '0';
+                    card.style.transform = 'translateX(50px)';
+                    setTimeout(() => card.remove(), 300);
+
+                    // Update count
+                    const countEl = document.querySelector('.record-count');
+                    const remaining = document.querySelectorAll('.scan-card').length - 1;
+                    countEl.textContent = remaining + ' record' + (remaining !== 1 ? 's' : '');
+                }
+            } catch (e) {
+                alert('Failed to delete record.');
+            }
+        }
+    </script>
+</body>
+
+</html>

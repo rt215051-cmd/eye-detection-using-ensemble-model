@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EyeGuard OS - Advanced Disease Detection</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --accent-glow: rgba(0, 240, 255, 0.5);
+            --primary: #00e5ff;
+            --secondary: #7000ff;
+            --surface: rgba(255, 255, 255, 0.03);
+            --surface-border: rgba(255, 255, 255, 0.1);
+            --text-main: #f0f4f8;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Ambient Background */
+        .ambient-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            z-index: -1;
+            background: radial-gradient(circle at 15% 50%, rgba(112, 0, 255, 0.1), transparent 50%),
+                        radial-gradient(circle at 85% 30%, rgba(0, 229, 255, 0.1), transparent 50%);
+        }
+
+        .ambient-bg::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            backdrop-filter: blur(80px);
+            z-index: 0;
+        }
+
+        header {
+            padding: 2rem 4rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--surface-border);
+            background: rgba(11, 15, 25, 0.6);
+            backdrop-filter: blur(20px);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            letter-spacing: 1px;
+            background: linear-gradient(90deg, #fff, var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo i {
+            color: var(--primary);
+            -webkit-text-fill-color: var(--primary);
+        }
+
+        .main-container {
+            flex: 1;
+            display: flex;
+            padding: 4rem;
+            gap: 3rem;
+            max-width: 1600px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .upload-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .glass-panel {
+            background: var(--surface);
+            border: 1px solid var(--surface-border);
+            border-radius: 24px;
+            padding: 2.5rem;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .upload-area {
+            border: 2px dashed rgba(0, 229, 255, 0.3);
+            border-radius: 16px;
+            padding: 4rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            background: rgba(0, 0, 0, 0.2);
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .upload-area:hover, .upload-area.dragover {
+            border-color: var(--primary);
+            background: rgba(0, 229, 255, 0.05);
+            box-shadow: 0 0 20px rgba(0, 229, 255, 0.1) inset;
+        }
+
+        .upload-icon {
+            font-size: 4rem;
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+            filter: drop-shadow(0 0 10px var(--accent-glow));
+            transition: transform 0.3s ease;
+        }
+
+        .upload-area:hover .upload-icon {
+            transform: translateY(-10px);
+        }
+
+        .upload-title {
+            font-size: 1.5rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .upload-subtitle {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        #image-preview {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 14px;
+            display: none;
+            background: #000;
+            z-index: 2;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, var(--primary) 0%, #0099ff 100%);
+            color: #0b0f19;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 229, 255, 0.3);
+            margin-top: 1rem;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 229, 255, 0.4);
+        }
+        
+        .btn::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: 0.5s;
+        }
+
+        .btn:hover::after {
+            left: 100%;
+        }
+
+        .btn:disabled {
+            background: #334;
+            color: #889;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .results-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .diagnosis-card {
+            background: linear-gradient(145deg, rgba(20,25,40,0.8) 0%, rgba(10,15,25,0.9) 100%);
+            border: 1px solid var(--surface-border);
+            border-radius: 24px;
+            padding: 2.5rem;
+            position: relative;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .diagnosis-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border-radius: 24px 24px 0 0;
+        }
+
+        .status-badge {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            padding: 0.4rem 1rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            background: rgba(255,255,255,0.1);
+        }
+
+        .skeleton {
+            animation: pulse 1.5s infinite ease-in-out;
+            background: linear-gradient(90deg, #1a2333 0%, #253347 50%, #1a2333 100%);
+            background-size: 200% 100%;
+            border-radius: 8px;
+        }
+
+        @keyframes pulse {
+            0% { background-position: 100% 0; }
+            100% { background-position: -100% 0; }
+        }
+
+        .primary-diagnosis {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(to right, #fff, #b4c4d9);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .confidence-meter {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-top: 1rem;
+        }
+
+        .confidence-val {
+            font-size: 1.8rem;
+            font-weight: 300;
+            color: var(--primary);
+        }
+
+        .progress-bar-bg {
+            flex: 1;
+            height: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--secondary), var(--primary));
+            border-radius: 10px;
+            transition: width 1s cubic-bezier(0.1, 0.7, 0.1, 1);
+            box-shadow: 0 0 10px var(--primary);
+        }
+
+        .details-list {
+            margin-top: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 12px;
+            transition: transform 0.2s;
+        }
+        
+        .detail-item:hover {
+            transform: translateX(5px);
+            background: rgba(255,255,255,0.05);
+        }
+
+        .disease-name {
+            font-weight: 500;
+        }
+
+        .disease-prob {
+            color: var(--text-muted);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .prob-bar {
+            width: 100px;
+            height: 4px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 2px;
+            margin-left: 15px;
+            overflow: hidden;
+        }
+
+        .prob-fill {
+            height: 100%;
+            background: var(--primary);
+            border-radius: 2px;
+        }
+
+        .disease-row {
+            display: flex;
+            align-items: center;
+        }
+
+        .loader {
+            display: none;
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(0,0,0,0.2);
+            border-bottom-color: #0b0f19;
+            border-radius: 50%;
+            display: inline-block;
+            box-sizing: border-box;
+            animation: rotation 1s linear infinite;
+        }
+
+        @keyframes rotation {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .hidden { display: none !important; }
+
+        @media (max-width: 1024px) {
+            .main-container {
+                flex-direction: column;
+                padding: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="ambient-bg"></div>
+
+    <header>
+        <div class="logo">
+            <i class="fa-solid fa-eye"></i> EyeGuard OS
+        </div>
+        <div style="display: flex; gap: 15px; align-items: center;">
+            <a href="/history" style="color: var(--primary); border: 1px solid rgba(0, 229, 255, 0.3); padding: 5px 15px; border-radius: 20px; text-decoration: none; font-size: 0.9rem; transition: all 0.3s;" onmouseover="this.style.background='rgba(0, 229, 255, 0.1)'" onmouseout="this.style.background='transparent'">
+                <i class="fa-solid fa-clock-rotate-left"></i> History
+            </a>
+            <div style="font-size: 0.9rem; color: var(--text-muted); padding: 5px 15px; border-radius: 20px; border: 1px solid var(--surface-border);">
+                Ensemble AI Engine v2.0
+            </div>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <!-- Input Section -->
+        <div class="upload-section">
+            <div class="glass-panel">
+                <h2 style="margin-bottom: 1.5rem; font-weight: 500;">Diagnostic Input</h2>
+                <div class="upload-area" id="drop-zone">
+                    <img id="image-preview" src="" alt="Preview">
+                    <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
+                    <div class="upload-title">Drag & Drop Retinal Scan</div>
+                    <div class="upload-subtitle">or click to browse files (JPEG, PNG)</div>
+                    <input type="file" id="file-input" accept="image/*">
+                </div>
+                
+                <button class="btn" id="analyze-btn" disabled>
+                    <span id="btn-text">Initiate Analysis <i class="fa-solid fa-microchip"></i></span>
+                    <span id="btn-loader" class="loader hidden" style="border-bottom-color: #0b0f19;"></span>
+                </button>
+            </div>
+            
+            <div class="glass-panel" style="padding: 1.5rem;">
+                <h3 style="font-size: 1rem; color: var(--text-muted); margin-bottom: 10px;"><i class="fa-solid fa-shield-halved"></i> Security & Privacy</h3>
+                <p style="font-size: 0.85rem; color: #64748b; line-height: 1.5;">
+                    Processed entirely on edge/local infrastructure. No patient images are stored or transmitted. HIPPA compliant architecture.
+                </p>
+            </div>
+        </div>
+
+        <!-- Output Section -->
+        <div class="results-section">
+            <div class="diagnosis-card" id="main-result">
+                <div class="status-badge" id="status-badge">AWAITING SCAN</div>
+                
+                <div id="empty-state">
+                    <div class="skeleton" style="height: 40px; width: 70%; margin-bottom: 20px;"></div>
+                    <div class="skeleton" style="height: 20px; width: 40%;"></div>
+                </div>
+
+                <div id="result-state" class="hidden">
+                    <div style="font-size: 1rem; color: var(--primary); font-weight: 600; letter-spacing: 2px; margin-bottom: 10px; text-transform: uppercase;">Primary Detection</div>
+                    <div class="primary-diagnosis" id="pred-class">...</div>
+                    
+                    <div class="confidence-meter">
+                        <div class="confidence-val"><span id="pred-conf">0.0</span>%</div>
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill" id="pred-bar"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-panel">
+                <h2 style="margin-bottom: 1.5rem; font-weight: 500; font-size: 1.2rem;">Detailed Probability Matrix</h2>
+                
+                <div class="details-list" id="details-list">
+                    <!-- Skeletons initially -->
+                    <div class="detail-item"><div class="skeleton" style="width: 100%; height: 20px;"></div></div>
+                    <div class="detail-item"><div class="skeleton" style="width: 100%; height: 20px;"></div></div>
+                    <div class="detail-item"><div class="skeleton" style="width: 100%; height: 20px;"></div></div>
+                    <div class="detail-item"><div class="skeleton" style="width: 100%; height: 20px;"></div></div>
+                    <div class="detail-item"><div class="skeleton" style="width: 100%; height: 20px;"></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const preview = document.getElementById('image-preview');
+        const analyzeBtn = document.getElementById('analyze-btn');
+        const btnText = document.getElementById('btn-text');
+        const btnLoader = document.getElementById('btn-loader');
+        
+        let currentFile = null;
+
+        // File handling
+        dropZone.addEventListener('click', () => fileInput.click());
+        
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            if (e.dataTransfer.files.length) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            if (!file.type.startsWith('image/')) {
+                alert('Please upload an image file.');
+                return;
+            }
+            currentFile = file;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                preview.src = e.target.result;
+                preview.style.display = 'block';
+                analyzeBtn.disabled = false;
+                
+                // Reset UI
+                document.getElementById('empty-state').classList.remove('hidden');
+                document.getElementById('result-state').classList.add('hidden');
+                document.getElementById('status-badge').textContent = 'READY TO ANALYZE';
+                document.getElementById('status-badge').style.background = 'rgba(0, 229, 255, 0.2)';
+                document.getElementById('status-badge').style.color = 'var(--primary)';
+                
+                // Reset Matrix Skeletons
+                const list = document.getElementById('details-list');
+                list.innerHTML = `
+                    <div class="detail-item"><div class="skeleton" style="width: 100%; height: 20px;"></div></div>
+                    <div class="detail-item"><div class="skeleton" style="width: 100%; height: 20px;"></div></div>
+                    <div class="detail-item"><div class="skeleton" style="width: 100%; height: 20px;"></div></div>
+                    <div class="detail-item"><div class="skeleton" style="width: 100%; height: 20px;"></div></div>
+                    <div class="detail-item"><div class="skeleton" style="width: 100%; height: 20px;"></div></div>
+                `;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Analysis
+        analyzeBtn.addEventListener('click', async () => {
+            if (!currentFile) return;
+
+            // UI Loading state
+            analyzeBtn.disabled = true;
+            btnText.textContent = 'Processing Data... ';
+            btnLoader.style.display = 'inline-block';
+            document.getElementById('status-badge').textContent = 'ANALYZING...';
+
+            const formData = new FormData();
+            formData.append('file', currentFile);
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) throw new Error(data.error || 'Server error');
+
+                displayResults(data);
+                
+            } catch (err) {
+                alert('Error processing image: ' + err.message);
+                document.getElementById('status-badge').textContent = 'ERROR';
+                document.getElementById('status-badge').style.background = 'rgba(255, 68, 68, 0.2)';
+                document.getElementById('status-badge').style.color = '#ff4444';
+            } finally {
+                // UI Reset
+                analyzeBtn.disabled = false;
+                btnText.innerHTML = 'Initiate Analysis <i class="fa-solid fa-microchip"></i>';
+                btnLoader.style.display = 'none';
+            }
+        });
+
+        function displayResults(data) {
+            document.getElementById('empty-state').classList.add('hidden');
+            document.getElementById('result-state').classList.remove('hidden');
+            
+            document.getElementById('status-badge').textContent = 'ANALYSIS COMPLETE';
+            document.getElementById('status-badge').style.background = 'rgba(112, 0, 255, 0.2)';
+            document.getElementById('status-badge').style.color = '#b380ff';
+
+            const conf = data.confidence;
+            document.getElementById('pred-class').textContent = data.prediction;
+            
+            // Reset state
+            document.getElementById('pred-conf').textContent = '0.0';
+            document.getElementById('pred-bar').style.width = '0%';
+            
+            // Animate confidence
+            let i = 0;
+            const interval = setInterval(() => {
+                if(i >= conf) {
+                    clearInterval(interval);
+                    document.getElementById('pred-conf').textContent = conf.toFixed(1);
+                    return;
+                }
+                i += conf / 20;
+                document.getElementById('pred-conf').textContent = i.toFixed(1);
+            }, 50);
+
+            // Animate bar
+            setTimeout(() => {
+                document.getElementById('pred-bar').style.width = conf + '%';
+            }, 100);
+
+            // Populate list
+            const list = document.getElementById('details-list');
+            list.innerHTML = '';
+            
+            data.all_results.forEach((item, index) => {
+                const prob = item.probability.toFixed(2);
+                
+                // Color scaling logic based on confidence
+                let fillColor = 'var(--primary)';
+                if (index === 0 && item.probability > 50) {
+                    fillColor = 'var(--secondary)'; // Emphasize highest
+                }
+                
+                list.innerHTML += `
+                    <div class="detail-item" style="animation: fade-in ${0.3 + index * 0.1}s forwards; opacity: 0; transform: translateY(10px);">
+                        <div class="disease-name">${item.disease}</div>
+                        <div class="disease-row">
+                            <span class="disease-prob">${prob}%</span>
+                            <div class="prob-bar">
+                                <div class="prob-fill" style="width: 0%; background: ${fillColor}; transition: width 1s ease ${(index * 0.1) + 0.5}s;" data-width="${prob}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            // Trigger animations
+            setTimeout(() => {
+                const fills = document.querySelectorAll('.prob-fill');
+                fills.forEach(fill => {
+                    fill.style.width = fill.getAttribute('data-width');
+                });
+            }, 50);
+        }
+    </script>
+    <style>
+        @keyframes fade-in {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</body>
+</html>
